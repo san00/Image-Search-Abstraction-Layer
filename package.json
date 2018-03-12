@@ -1,0 +1,26 @@
+{
+  "name": "image-searcher-app",
+  "version": "0.0.1",
+  "description": "Image search abstraction layer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.16.2",
+    "mongoose": "^5.0.9",
+    "mongodb": "^3.0.4"
+  },
+  "engines": {
+    "node": "8.x"
+  },
+  "repository": {
+    "url": "https://github.com/san00/Image-Search-Abstraction-Layer"
+  },
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "glitch",
+    "express"
+  ]
+}
