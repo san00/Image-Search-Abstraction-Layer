@@ -17,7 +17,9 @@ app.get("/", function (request, response) {
   response.sendFile(__dirname + '/views/index.html');
 });
 
+
 mongoClient.connect(db, function(err,db){
+
 app.get("/api/search/:searchValue(*)", function (request, response) {
   
   const searchTerm = request.params.searchValue;
@@ -38,12 +40,18 @@ app.get("/api/search/:searchValue(*)", function (request, response) {
     });
     return response.json(data);
 
-
   });
+
+//Retrieve entire search history from database
+ app.get("/api/searchItems", function(req, res, next){
+   
+    schema.find({}, function (err, data){
+         res.json(data);       
+    })
+  });  
 });
-
-
-
+  
+ 
 // listen for requests :)
 var listener = app.listen(process.env.PORT, function () {
   console.log('Your app is listening on port ' + listener.address().port);
