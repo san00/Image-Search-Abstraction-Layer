@@ -15,7 +15,7 @@ const gkey = process.env.GKEYTWO;
 
 var request = require('request');
 const https = require('https');
-const url = "https://www.googleapis.com/customsearch/v1" + '?key=' + gkey + '&cx=' + cseId + "&q=cats";
+const url = "https://www.googleapis.com/customsearch/v1" + '?key=' + gkey + '&cx=' + cseId + "&q=cats" + "&searchType=image";
 
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
@@ -27,8 +27,6 @@ app.get("/", function (request, response) {
 
 
 mongoClient.connect(db, function(err,db){
-
-
   
 app.get("/api/search/", function (request, response, next) {
   
@@ -50,8 +48,22 @@ app.get("/api/search/", function (request, response, next) {
   res.on("end", function(){
   console.log(returnedData);
     
-    response.json(returnedData);
+    let searchList = [];
+    let parsed = JSON.parse(returnedData);
+    let list = parsed.items;
     
+    for(let i =0;i<list.length;i++)
+    {
+      let data = {
+        url:list[i].link,
+        snippet:list[i].snippet,
+        thumbnail:list[i].image.thumbnailLink,
+        context:list[i].image.contextLink
+                }
+    searchList.push(data)
+    }
+        response.json(searchList);
+
   })
  }).on("error",function(e){
  console.log(e);
