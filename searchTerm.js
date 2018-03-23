@@ -5,7 +5,7 @@ mongoose.connect(process.env.MONGO);
 const Schema = mongoose.Schema;
 
 const searchTermSchema = new Schema({
-
+  
 searchTerm:String,
   searchDate:Date
 
