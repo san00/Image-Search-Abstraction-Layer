@@ -15,7 +15,6 @@ const gkey = process.env.GKEYTWO;
 
 var request = require('request');
 const https = require('https');
-const url = "https://www.googleapis.com/customsearch/v1" + '?key=' + gkey + '&cx=' + cseId + "&q=cats" + "&searchType=image";
 
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
@@ -28,11 +27,26 @@ app.get("/", function (request, response) {
 
 mongoClient.connect(db, function(err,db){
   
-app.get("/api/search/", function (request, response, next) {
+app.get("/api/search/:searchTerm(*)", function (request, response, next) {
   
+ 
   const searchTerm = request.params.searchTerm 
   const offset = request.query;
   let returnedData = "";
+  
+    const data = new schema({
+    searchTerm,
+    searchDate: new Date()
+  });
+    data.save((err) => {
+
+      if (err) {
+        console.log('ooops, sorry an error has occurred' + err);
+        response.send('error' + err)
+      }
+    });
+  
+  const url = "https://www.googleapis.com/customsearch/v1/" + '?key=' + gkey + '&cx=' + cseId + "&q=" + searchTerm + "&searchType=image";
   
   // node https module 
  https.get(url, function (res){
@@ -70,24 +84,6 @@ app.get("/api/search/", function (request, response, next) {
  }); 
   
 }); 
-  
-  
-//   const data = new schema({
-//     searchTerm,
-//     searchDate: new Date()
-//   });
-  
-//   data.save((err) => {
-
-//       if (err) {
-//         console.log('ooops, sorry an error has occurred' + err);
-//         response.send('error' + err)
-//       }
-//     });
-//     return response.json(data);
-
-//   });
-
   
 //Retrieve entire search history from database
  app.get("/api/history", function(req, res, next){
