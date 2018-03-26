@@ -1,101 +1,80 @@
 // init project
-var express = require('express');
-var app = express();
-const apiKey = process.env.GOOGLEAPIKEY;
-
+const express = require('express');
+const app = express();
 const mongoose = require('mongoose');
 const mongoClient = require('mongodb').MongoClient;
 const schema = require('./searchTerm');
 const db = process.env.MONGO;
-const GoogleImages = require('google-images');
-const client = new GoogleImages('cseId', 'apiKey');
 const cseId = process.env.CSEID;
 const gkey = process.env.GKEYTWO;
-
-
-var request = require('request');
 const https = require('https');
+
+
+mongoClient.connect(db, function(err, db) {
+
+  //search api & save results to database  
+  app.get("/api/search/:searchTerm(*)", (request, response, next) => {
+
+    const searchTerm = request.params.searchTerm
+    const offset = request.query;
+    let searchResults = "";
+    const url = "https://www.googleapis.com/customsearch/v1/" + '?key=' + gkey + '&cx=' + cseId + "&q=" + searchTerm + "&searchType=image";
+
+    const data = new schema({
+      searchTerm,
+      searchDate: new Date()
+    });
+    
+    data.save((err) => {
+      if (err) {
+        response.send('error' + err)
+      }
+    });
+    
+    // node https module 
+    https.get(url, (res) => {
+      res.on("data", (data) => {
+        searchResults += data;
+      });
+      res.on("end", () => {
+
+        let searchList = [];
+        let parsed = JSON.parse(searchResults);
+        let list = parsed.items;
+
+        for (let i = 0; i < list.length; i++) {
+          let data = {
+            url: list[i].link,
+            snippet: list[i].snippet,
+            thumbnail: list[i].image.thumbnailLink,
+            context: list[i].image.contextLink
+          }
+          searchList.push(data)
+        }
+        response.json(searchList);
+      })
+    }).on("error", (e) => {
+      response.send("error" + e)
+    });
+  });
+
+  //Retrieve entire search history from database
+  app.get("/api/history", (req, res, next) => {
+    schema.find({}, (err, data) => {
+      res.json(data);
+    })
+  });
+});
 
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
 
 // http://expressjs.com/en/starter/basic-routing.html
-app.get("/", function (request, response) {
+app.get("/", function(request, response) {
   response.sendFile(__dirname + '/views/index.html');
 });
 
-
-mongoClient.connect(db, function(err,db){
-  
-app.get("/api/search/:searchTerm(*)", function (request, response, next) {
-  
- 
-  const searchTerm = request.params.searchTerm 
-  const offset = request.query;
-  let returnedData = "";
-  
-    const data = new schema({
-    searchTerm,
-    searchDate: new Date()
-  });
-    data.save((err) => {
-
-      if (err) {
-        console.log('ooops, sorry an error has occurred' + err);
-        response.send('error' + err)
-      }
-    });
-  
-  const url = "https://www.googleapis.com/customsearch/v1/" + '?key=' + gkey + '&cx=' + cseId + "&q=" + searchTerm + "&searchType=image";
-  
-  // node https module 
- https.get(url, function (res){
- // console.log(response);
-   console.log('statusCode:', res.statusCode);
-  console.log('headers:', res.headers);
-   
-    
-   res.on("data", function(data){
-     returnedData += data;
-           
-   });
-  res.on("end", function(){
-  console.log(returnedData);
-    
-    let searchList = [];
-    let parsed = JSON.parse(returnedData);
-    let list = parsed.items;
-    
-    for(let i =0;i<list.length;i++)
-    {
-      let data = {
-        url:list[i].link,
-        snippet:list[i].snippet,
-        thumbnail:list[i].image.thumbnailLink,
-        context:list[i].image.contextLink
-                }
-    searchList.push(data)
-    }
-        response.json(searchList);
-
-  })
- }).on("error",function(e){
- console.log(e);
- }); 
-  
-}); 
-  
-//Retrieve entire search history from database
- app.get("/api/history", function(req, res, next){
-   
-    schema.find({}, function (err, data){
-        res.json(data);
-    })
-  });  
-  
-});
-
 // listen for requests :)
-var listener = app.listen(process.env.PORT, function () {
+var listener = app.listen(process.env.PORT, function() {
   console.log('Your app is listening on port ' + listener.address().port);
 });
